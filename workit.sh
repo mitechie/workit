@@ -166,3 +166,8 @@ function workit () {
 	return 0
 }
 
+#
+# Set up tab completion.  (Adapted from Arthur Koziel's version at 
+# http://arthurkoziel.com/2008/10/11/virtualenvwrapper-bash-completion/)
+# 
+compctl -g "`show_workit_projects`" workit 
