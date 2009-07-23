@@ -6,7 +6,7 @@
 
 # TODO
 # virtualenv sets the VIRTUAL_ENV system variable, need to replicate a bit
-
+source ~/src/workit/process_functions.sh
 
 # You can override this setting in your .zshrc
 if [ "$WORKIT_HOME" = "" ]
@@ -18,7 +18,6 @@ fi
 # relative path components.
 WORKIT_HOME=$(sh -c 'cd "$WORKIT_HOME"; pwd')
 export WORKIT_HOME
-
 
 ### Functions
 
@@ -56,6 +55,7 @@ function verify_active_project () {
 # source the pre/post hooks
 function workit_source_hook () {
     scriptname="$1"
+    
     if [ -f "$scriptname" ]
     then
         source "$scriptname"
@@ -160,8 +160,8 @@ function workit () {
     #     virtualenvwrapper_source_hook "$WORKON_HOME/postdeactivate"
     # }'
     
-    workit_source_hook "$project/postactivate"
-    workit_source_hook "$project/postactivate"    
+    workit_source_hook "postactivate"
+#    workit_source_hook "$project/postactivate"    
     
 	return 0
 }
