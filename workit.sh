@@ -109,7 +109,7 @@ function show_workit_projects () {
     verify_workit_home || return 1
     # NOTE: DO NOT use ls here because colorized versions spew control characters
     #       into the output list.
-    (cd "$WORKIT_HOME"; for f in *; do echo $f; done) | sed 's|^\./||' | sort
+    (cd "$WORKIT_HOME"; for f in *; do [[ -d $f ]] && echo $f; done) | sed 's|^\./||' | sort
 }
 
 # List or change workit projects
@@ -117,17 +117,19 @@ function show_workit_projects () {
 # Usage: workit [environment_name]
 #
 function workit () {
-	typeset project="$1"
-	if [ "$project" = "" ]
+	typeset PROJ_NAME="$1"
+	typeset PROJ_PATH="$WORKIT_HOME/$PROJ_NAME"
+
+	if [ "$PROJ_NAME" = "" ]
     then
         show_workit_projects
         return 1
     fi
 
     verify_workit_home || return 1
-    verify_workit_project $project || return 1
+    verify_workit_project $PROJ_NAME || return 1
 
-    cd "$WORKIT_HOME/$project"
+    cd $PROJ_PATH
     
     # Deactivate any current environment "destructively"
     # before switching so we use our override function,

@@ -97,6 +97,28 @@ function zpgsql_start () {
     return 1
 }
 
+function zmysql_start () {
+    zprocess_running 'mysqld'
+    started="$?"
+
+    if [ $started -eq 0 ]; then
+        eval "$MYSQL_START"
+    else
+        echo "MySQL Running"
+        return 1
+    fi
+    
+    # make sure that it's running
+    zprocess_running 'mysqld'
+    started="$?"
+    if [ $started -eq 0 ]; then
+        echo "Could not start MySQL"
+        return 0
+    fi
+
+    return 1
+}
+
 # ctags
 function zctags () {
     
