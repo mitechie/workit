@@ -118,7 +118,7 @@ function show_workit_projects () {
 #
 function workit () {
 	typeset PROJ_NAME="$1"
-	typeset PROJ_PATH="$WORKIT_HOME/$PROJ_NAME"
+	export PROJ_PATH="$WORKIT_HOME/$PROJ_NAME"
 
 	if [ "$PROJ_NAME" = "" ]
     then
