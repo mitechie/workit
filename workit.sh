@@ -3,44 +3,56 @@
 # heavily influenced/copied from Doug Hellmanns, virtualenvwrapper
 # http://bitbucket.org/dhellmann/virtualenvwrapper/overview/
 #
+# set -x
 
 # TODO
 # virtualenv sets the VIRTUAL_ENV system variable, need to replicate a bit
 source ~/src/workit/process_functions.sh
 
 # You can override this setting in your .zshrc
-if [ "$WORKIT_HOME" = "" ]
-then
-    export WORKIT_HOME="$HOME/src"
-fi
+#if [ "$WORKIT_HOME" = "" ]
+#then
+WORKIT_HOME=( "$HOME/src" "$HOME/configs" )
+#fi
 
 # Normalize the directory name in case it includes 
 # relative path components.
-WORKIT_HOME=$(sh -c 'cd "$WORKIT_HOME"; pwd')
+for ((i=1;i<=${#WORKIT_HOME};i++)); do
+    rpath=$WORKIT_HOME[$i]
+    echo $rpath
+    WORKIT_HOME[$i]=$(/bin/zsh -c 'cd "$rpath"; pwd')
+done
 export WORKIT_HOME
 
 ### Functions
 
 # Verify that the WORKON_HOME directory exists
 function verify_workit_home () {
-    if [ ! -d "$WORKIT_HOME" ]
-    then
-        echo "ERROR: projects directory '$WORKIT_HOME' does not exist." >&2
-        return 1
-    fi
+    for zpath in $WORKIT_HOME; do
+        if [ ! -d "$zpath" ]
+        then
+            echo "ERROR: projects directory '$zpath' does not exist." >&2
+            return 1
+        fi
+    done
     return 0
 }
 
 # Verify that the requested project exists
 function verify_workit_project () {
     typeset env_name="$1"
-    if [ ! -d "$WORKIT_HOME/$env_name" ]
-    then
-       echo "ERROR: Project '$env_name' does not exist. Create it with 'mkproj $env_name'." >&2
-       return 1
-    fi
-    return 0
+
+    for zpath in $WORKIT_HOME; do
+        if [ -d "$zpath/$env_name" ]
+        then
+            echo "$zpath/$env_name"
+            return 0
+        fi
+    done
+
+    return 1
 }
+
 
 # Verify that the active project exists
 function verify_active_project () {
@@ -77,6 +89,7 @@ function workit_run_hook () {
 #
 # Usage: mkworkit [options] PROJNAME
 #
+# @todo figure out how to deal with array workit home path
 function mkworkit () {
     if [ $# -eq 0 ]  # Must have command-line args to demo script.
     then
@@ -109,7 +122,11 @@ function show_workit_projects () {
     verify_workit_home || return 1
     # NOTE: DO NOT use ls here because colorized versions spew control characters
     #       into the output list.
-    (cd "$WORKIT_HOME"; for f in *; do [[ -d $f ]] && echo $f; done) | sed 's|^\./||' | sort
+    all=()
+    for ((i=1;i<=${#WORKIT_HOME};i++)); do
+        dirs=$( cd "$WORKIT_HOME[$i]"; for f in *; do [[ -d $f ]] && echo $f; done )
+        all+=("\n\n$dirs")
+    done
 }
 
 # List or change workit projects
@@ -118,7 +135,14 @@ function show_workit_projects () {
 #
 function workit () {
 	typeset PROJ_NAME="$1"
-	export PROJ_PATH="$WORKIT_HOME/$PROJ_NAME"
+
+	PROJ_PATH=$( verify_workit_project "$PROJ_NAME" )
+    if [ ! -d $PROJ_PATH ]
+    then
+        return 1
+    else
+        export PROJ_PATH
+    fi
 
 	if [ "$PROJ_NAME" = "" ]
     then
@@ -127,7 +151,6 @@ function workit () {
     fi
 
     verify_workit_home || return 1
-    verify_workit_project $PROJ_NAME || return 1
 
     # Deactivate any current environment "destructively"
     # before switching so we use our override function,
