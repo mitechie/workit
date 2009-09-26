@@ -8,21 +8,29 @@ The nice thing is that it allows you to setup a postactivate command which can
 setup your environment for you. Below is a sample postactivate script which
 performs several actions upon getting into the project. 
 
-$ workit someproject
+> $ workit someproject
+> 
+> #! /bin/zsh
+> 
+> # variables needed for some script
+> export JS_PATH="$PROJ_PATH/src";
+> 
+> # define a custom function we can use to launch tests
+> qunit() { chrome "http://project/javascript/tests/runtests.html" }
+> 
+> # run ctags so vim is up to date when we start working on a project
+> ctags -f $PROJ_PATH/tags -R $PROJ_PATH/src 2> /dev/null &!
+> 
+> # use the reusable methods for start/stop serives. This project shuts down mysql
+> # and starts up pgsql for use
+> zmysql_stop
+> zpgsql_start
 
-#! /bin/zsh
+You can also run a postdeactivate to shut down or clear settings from the
+project. This is run whenver the command `deactivate` is run or you switch to
+another project. 
 
-# variables needed for some script
-export JS_PATH="$PROJ_PATH/src";
-
-# define a custom function we can use to launch tests
-qunit() { chrome "http://project/javascript/tests/runtests.html" }
-
-# run ctags so vim is up to date when we start working on a project
-ctags -f $PROJ_PATH/tags -R $PROJ_PATH/src 2> /dev/null &!
-
-# use the reusable methods for start/stop serives. This project shuts down mysql
-# and starts up pgsql for use
-zmysql_stop
-zpgsql_start
+Projects are directories within the directories specified in the WORKIT_HOME.
+You can create an array of locations to used. Any directory in these paths will
+be used to complete/switch projects. 
 
