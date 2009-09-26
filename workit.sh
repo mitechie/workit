@@ -129,22 +129,22 @@ function workit () {
     verify_workit_home || return 1
     verify_workit_project $PROJ_NAME || return 1
 
-    cd $PROJ_PATH
-    
     # Deactivate any current environment "destructively"
     # before switching so we use our override function,
     # if it exists.
-    # type deactivate >/dev/null 2>&1
-    # if [ $? -eq 0 ]
-    # then
-    #     deactivate
-    # fi
+    type deactivate >/dev/null 2>&1
+    if [ $? -eq 0 ]
+    then
+        deactivate
+    fi
     
+    cd $PROJ_PATH
+
     # Save the deactivate function from virtualenv
     # virtualenvwrapper_saved_deactivate=$(typeset -f deactivate)
 
     # Replace the deactivate() function with a wrapper.
-    # eval 'function deactivate () {
+    eval 'function deactivate () {
     #     # Call the local hook before the global so we can undo
     #     # any settings made by the local postactivate first.
     #     virtualenvwrapper_source_hook "$VIRTUAL_ENV/bin/predeactivate"
@@ -159,8 +159,8 @@ function workit () {
     #     deactivate
 
     #     virtualenvwrapper_source_hook "$env_postdeactivate_hook"
-    #     virtualenvwrapper_source_hook "$WORKON_HOME/postdeactivate"
-    # }'
+        workit_source_hook "postdeactivate"
+    }'
     
     workit_source_hook "postactivate"
 #    workit_source_hook "$project/postactivate"    
