@@ -13,16 +13,21 @@ source ~/src/workit/process_functions.sh
 #if [ "$WORKIT_HOME" = "" ]
 #then
 WORKIT_HOME=( "$HOME/src" "$HOME/configs" )
+export WORKIT_HOME
+
 #fi
 
 # Normalize the directory name in case it includes 
 # relative path components.
-for ((i=1;i<=${#WORKIT_HOME};i++)); do
-    rpath=$WORKIT_HOME[$i]
-    echo $rpath
-    WORKIT_HOME[$i]=$(/bin/zsh -c 'cd "$rpath"; pwd')
-done
-export WORKIT_HOME
+# this broke hard for some reason so forget normalizing for now. 
+# it's probably some sort of subshell thing again, but 
+# for now just leave it be and look it up later
+# for ((i=1;i<=${#WORKIT_HOME};i++)); do
+#     rpath=$WORKIT_HOME[$i]
+#     echo $rpath
+#     WORKIT_HOME[$i]=$(/bin/zsh -c 'cd "$rpath"; pwd')
+# done
+# export WORKIT_HOME
 
 ### Functions
 
@@ -127,6 +132,7 @@ function show_workit_projects () {
         dirs=$( cd "$WORKIT_HOME[$i]"; for f in *; do [[ -d $f ]] && echo $f; done )
         all+=("\n\n$dirs")
     done
+    echo $all
 }
 
 # List or change workit projects
