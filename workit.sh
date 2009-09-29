@@ -96,15 +96,39 @@ function workit_run_hook () {
 #
 # @todo figure out how to deal with array workit home path
 function mkworkit () {
-    if [ $# -eq 0 ]  # Must have command-line args to demo script.
+    verify_workit_home || return 1
+
+    ARGS=2  # Two args to script expected.
+
+    if [ $# -ne "$ARGS" ]
     then
-      echo "Please supply a project name"
-      exit 65
+      echo "Usage: mkworkit -pX projname"
+      show_workit_home_options
+      return 65
     fi
 
     eval "projname=\$$#"
-    verify_workit_home || return 1
-    (cd "$WORKIT_HOME" &&
+
+    while getopts "p:" par; do
+        case $par in
+            (p) path_idx=$OPTARG;;
+            (?) exit 1;;
+        esac
+    done
+    shift $(( OPTIND -1 ))
+
+    # test if the path_idx is a valid index less than the length of the
+    # WORKIT_HOME
+    max_index=${#WORKIT_HOME}
+    if [ "$path_idx" -ge "$max_index" ] 
+    then
+        echo "The -p path index must be a valid integer from the list of paths below"
+        show_workit_home_options
+        return 65
+    fi
+
+    proj_path=$WORKIT_HOME[$path_idx]
+    (cd "$proj_path" &&
         mkdir $projname &&
         touch "$projname/postactivate" &&
         touch "$projname/postdeactivate" &&
@@ -113,13 +137,14 @@ function mkworkit () {
         # skip the hook for now
         # && 
         # workit_run_hook "./premkvirtualenv" "$envname"
-        )
+    )
+
     # If they passed a help option or got an error from virtualenv,
     # the environment won't exist.  Use that to tell whether
     # we should switch to the environment and run the hook.
-    [ ! -d "$WORKIT_HOME/$envname" ] && return 0
-    workit "$envname"
-    # workit_source_hook "$WORKIT_HOME/postmkvirtualenv"
+    [ ! -d "$proj_path/$envname" ] && return 0
+    workit "$projname"
+    #workit_source_hook "$WORKIT_HOME/postmkvirtualenv"
 }
 
 # List the available environments.
@@ -133,6 +158,15 @@ function show_workit_projects () {
         all+=("\n\n$dirs")
     done
     echo $all
+}
+
+# list the available workit home directories for adding a new project to
+function show_workit_home_options () {
+    verify_workit_home || return 1
+    for ((i=1;i<=${#WORKIT_HOME};i++)); do
+        proj=${WORKIT_HOME[$i]}
+        echo "$i - $proj"
+    done
 }
 
 # List or change workit projects
