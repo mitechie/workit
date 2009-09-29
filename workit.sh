@@ -93,8 +93,6 @@ function workit_run_hook () {
 # Create a new project, in the WORKIT_HOME.
 #
 # Usage: mkworkit [options] PROJNAME
-#
-# @todo figure out how to deal with array workit home path
 function mkworkit () {
     verify_workit_home || return 1
 
