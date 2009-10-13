@@ -7,7 +7,7 @@
 
 # TODO
 # virtualenv sets the VIRTUAL_ENV system variable, need to replicate a bit
-source ~/src/workit/process_functions.sh
+source ~/projects/workit/process_functions.sh
 
 # You can override this setting in your .zshrc
 if [ "$WORKIT_HOME" = "" ]
