@@ -10,12 +10,11 @@
 source ~/src/workit/process_functions.sh
 
 # You can override this setting in your .zshrc
-#if [ "$WORKIT_HOME" = "" ]
-#then
-WORKIT_HOME=( "$HOME/src" "$HOME/configs" )
-export WORKIT_HOME
-
-#fi
+if [ "$WORKIT_HOME" = "" ]
+then
+	WORKIT_HOME=( "$HOME/src" "$HOME/configs" )
+	export WORKIT_HOME
+fi
 
 # Normalize the directory name in case it includes 
 # relative path components.
