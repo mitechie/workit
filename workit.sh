@@ -7,7 +7,11 @@
 
 # TODO
 # virtualenv sets the VIRTUAL_ENV system variable, need to replicate a bit
-source ~/projects/workit/process_functions.sh
+
+# source the helper script functions
+# assuming its in the same dir as this file
+BASEDIR=`dirname $0`
+source $BASEDIR/process_functions.sh
 
 # You can override this setting in your .zshrc
 if [ "$WORKIT_HOME" = "" ]
