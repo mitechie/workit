@@ -95,29 +95,43 @@ function workit_run_hook () {
 function mkworkit () {
     verify_workit_home || return 1
 
-    ARGS=2  # Two args to script expected.
+    workit_home_count=${#WORKIT_HOME}
+
+    if [ $workit_home_count -eq 1 ]
+    then
+        path_idx=1
+        ARGS=1  # only 1 arg needed, <projname>
+    else
+        ARGS=3  # 3 args, -p <x> <projname>
+    fi
 
     if [ $# -ne "$ARGS" ]
     then
-      echo "Usage: mkworkit -pX projname"
-      show_workit_home_options
-      return 65
+        echo "Usage: mkworkit -p <x> <projectname>"
+        show_workit_home_options
+        return 65
+    fi
+
+    # must have > 1 WORKIT_HOME defined
+    # so grab the -p value
+    if [ $workit_home_count -gt 1 ]
+    then
+        while getopts "p:" par; do
+            case $par in
+                (p) path_idx=$OPTARG;;
+                (?) exit 1;;
+            esac
+        done
+
+        shift $(( OPTIND -1 ))
     fi
 
     eval "projname=\$$#"
 
-    while getopts "p:" par; do
-        case $par in
-            (p) path_idx=$OPTARG;;
-            (?) exit 1;;
-        esac
-    done
-    shift $(( OPTIND -1 ))
-
     # test if the path_idx is a valid index less than the length of the
     # WORKIT_HOME
     max_index=${#WORKIT_HOME}
-    if [ "$path_idx" -ge "$max_index" ] 
+    if [ "$path_idx" -gt "$max_index" ] 
     then
         echo "The -p path index must be a valid integer from the list of paths below"
         show_workit_home_options
@@ -125,6 +139,7 @@ function mkworkit () {
     fi
 
     proj_path=$WORKIT_HOME[$path_idx]
+
     (cd "$proj_path" &&
         mkdir $projname &&
         touch "$projname/postactivate" &&
