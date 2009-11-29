@@ -144,7 +144,11 @@ function mkworkit () {
 
     proj_path=$WORKIT_HOME[$path_idx]
 
-    (cd "$proj_path" &&
+    # test for existing proj dir, if not create it, otherwise add 
+    # the post* script files to the existing dir
+    if [ ! -d $proj_path/$projname ]
+    then
+        (cd "$proj_path" &&
         mkdir $projname &&
         touch "$projname/postactivate" &&
         touch "$projname/postdeactivate" &&
@@ -153,7 +157,13 @@ function mkworkit () {
         # skip the hook for now
         # && 
         # workit_run_hook "./premkvirtualenv" "$envname"
-    )
+        )
+    else
+        (cd "$proj_path/$projname" &&
+        touch "postactivate" &&
+        touch "postdeactivate" &&
+        chmod +x "postactivate" "postdeactivate")
+    fi
 
     # If they passed a help option or got an error from virtualenv,
     # the environment won't exist.  Use that to tell whether
