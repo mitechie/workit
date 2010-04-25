@@ -49,16 +49,32 @@ function verify_workit_home () {
 # Verify that the requested project exists
 function verify_workit_project () {
     typeset env_name="$1"
+    proj_count=0
+    proj_list=()
 
     for zpath in $WORKIT_HOME; do
-        if [ -d "$zpath/$env_name" ]
-        then
-            echo "$zpath/$env_name"
-            return 0
+        target_path="$zpath/$env_name"
+        if [[ -d $target_path ]]; then
+            proj_list+=("$target_path")
+            ((proj_count+=1))
         fi
     done
 
-    return 1
+    if [[ $proj_count -eq 1 ]]; then
+        echo  "$proj_list[1]"
+        return 0
+    else
+        select item in $proj_list
+        do
+            case "$item" in
+                *)
+                echo "$item"
+                break
+                ;;
+            esac
+        done
+        return 0
+    fi
 }
 
 
@@ -76,9 +92,9 @@ function verify_active_project () {
 function workit_source_hook () {
     scriptname="$1"
     
-    if [ -f "$scriptname" ]
+    if [ -f ".workit/$scriptname" ]
     then
-        source "$scriptname"
+        source ".workit/$scriptname"
     fi
 }
 
@@ -99,71 +115,45 @@ function workit_run_hook () {
 function mkworkit () {
     verify_workit_home || return 1
 
+    if [[ "$1" == "" ]]; then
+        echo "\nUsage: mkworkit [project_name]\n"
+        return 1
+    fi
+
     workit_home_count=${#WORKIT_HOME}
 
-    if [ $workit_home_count -eq 1 ]
-    then
-        path_idx=1
-        ARGS=1  # only 1 arg needed, <projname>
-    else
-        ARGS=3  # 3 args, -p <x> <projname>
-    fi
-
-    if [ $# -ne "$ARGS" ]
-    then
-        echo "Usage: mkworkit -p <x> <projectname>"
-        show_workit_home_options
-        return 65
-    fi
-
-    # must have > 1 WORKIT_HOME defined
-    # so grab the -p value
     if [ $workit_home_count -gt 1 ]
     then
-        while getopts "p:" par; do
-            case $par in
-                (p) path_idx=$OPTARG;;
-                (?) exit 1;;
+        select proj_path in $WORKIT_HOME
+        do
+            case "$proj_path" in
+                *)
+                break
+                ;;
             esac
         done
-
-        shift $(( OPTIND -1 ))
+    else
+        proj_path=$WORKIT_HOME
     fi
 
     eval "projname=\$$#"
 
-    # test if the path_idx is a valid index less than the length of the
-    # WORKIT_HOME
-    max_index=${#WORKIT_HOME}
-    if [ "$path_idx" -gt "$max_index" ] 
-    then
-        echo "The -p path index must be a valid integer from the list of paths below"
-        show_workit_home_options
-        return 65
-    fi
-
-    proj_path=$WORKIT_HOME[$path_idx]
+    proj_workit_path="$proj_path/$projname/.workit"
 
     # test for existing proj dir, if not create it, otherwise add 
     # the post* script files to the existing dir
-    if [ ! -d $proj_path/$projname ]
+    if [ ! -d $proj_workit_path ]
     then
         (cd "$proj_path" &&
-        mkdir $projname &&
-        touch "$projname/postactivate" &&
-        touch "$projname/postdeactivate" &&
-        chmod +x "$projname/postactivate" "$projname/postdeactivate" 
-
-        # skip the hook for now
-        # && 
-        # workit_run_hook "./premkvirtualenv" "$envname"
+        mkdir -p "$proj_workit_path"
         )
     else
-        (cd "$proj_path/$projname" &&
-        touch "postactivate" &&
-        touch "postdeactivate" &&
-        chmod +x "postactivate" "postdeactivate")
+        (cd "$proj_workit_path")
     fi
+
+    touch "$proj_workit_path/postactivate" &&
+    touch "$proj_workit_path/postdeactivate" &&
+    chmod +x "$proj_workit_path/postactivate" "$proj_workit_path/postdeactivate" 
 
     # If they passed a help option or got an error from virtualenv,
     # the environment won't exist.  Use that to tell whether
@@ -180,10 +170,13 @@ function show_workit_projects () {
     #       into the output list.
     all=()
     for ((i=1;i<=${#WORKIT_HOME};i++)); do
-        dirs=$( cd "$WORKIT_HOME[$i]"; for f in *; do [[ -d $f ]] && echo $f; done )
-        all+=("\n\n$dirs")
+        echo "\n========================================"
+        echo "Workit directory $WORKIT_HOME[$i]:\n"
+        ls --color=auto -C $WORKIT_HOME[$i]
+        #dirs=$( cd "$WORKIT_HOME[$i]"; for f in *; do [[ -d $f ]] && echo $f; done )
+        #all+=("\n\n$dirs")
     done
-    echo $all
+    #echo $all
 }
 
 # list the available workit home directories for adding a new project to
@@ -202,6 +195,12 @@ function show_workit_home_options () {
 function workit () {
 	typeset PROJ_NAME="$1"
 
+	if [ "$PROJ_NAME" = "" ]
+    then
+        show_workit_projects
+        return 1
+    fi
+
 	PROJ_PATH=$( verify_workit_project "$PROJ_NAME" )
     if [ ! -d $PROJ_PATH ]
     then
@@ -210,11 +209,6 @@ function workit () {
         export PROJ_PATH
     fi
 
-	if [ "$PROJ_NAME" = "" ]
-    then
-        show_workit_projects
-        return 1
-    fi
 
     verify_workit_home || return 1
 
