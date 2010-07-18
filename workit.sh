@@ -16,14 +16,14 @@ source $BASEDIR/process_functions.sh
 # You can override this setting in your .zshrc
 if [ "$WORKIT_HOME" = "" ]
 then
-	WORKIT_HOME=( "$HOME/src" "$HOME/configs" )
+	WORKIT_HOME=( "$HOME/src" )
 	export WORKIT_HOME
 fi
 
-# Normalize the directory name in case it includes 
+# Normalize the directory name in case it includes
 # relative path components.
-# this broke hard for some reason so forget normalizing for now. 
-# it's probably some sort of subshell thing again, but 
+# this broke hard for some reason so forget normalizing for now.
+# it's probably some sort of subshell thing again, but
 # for now just leave it be and look it up later
 # for ((i=1;i<=${#WORKIT_HOME};i++)); do
 #     rpath=$WORKIT_HOME[$i]
@@ -91,10 +91,10 @@ function verify_active_project () {
 # source the pre/post hooks
 function workit_source_hook () {
     scriptname="$1"
-    
-    if [ -f ".workit/$scriptname" ]
+
+    if [ -f "$scriptname" ]
     then
-        source ".workit/$scriptname"
+        source "$scriptname"
     fi
 }
 
@@ -138,9 +138,9 @@ function mkworkit () {
 
     eval "projname=\$$#"
 
-    proj_workit_path="$proj_path/$projname/.workit"
+    proj_workit_path="$proj_path/$projname/"
 
-    # test for existing proj dir, if not create it, otherwise add 
+    # test for existing proj dir, if not create it, otherwise add
     # the post* script files to the existing dir
     if [ ! -d $proj_workit_path ]
     then
@@ -153,7 +153,7 @@ function mkworkit () {
 
     touch "$proj_workit_path/postactivate" &&
     touch "$proj_workit_path/postdeactivate" &&
-    chmod +x "$proj_workit_path/postactivate" "$proj_workit_path/postdeactivate" 
+    chmod +x "$proj_workit_path/postactivate" "$proj_workit_path/postdeactivate"
 
     # If they passed a help option or got an error from virtualenv,
     # the environment won't exist.  Use that to tell whether
@@ -220,7 +220,7 @@ function workit () {
     then
         deactivate
     fi
-    
+
     cd $PROJ_PATH
 
     # Save the deactivate function from virtualenv
@@ -232,9 +232,9 @@ function workit () {
     #     # any settings made by the local postactivate first.
     #     virtualenvwrapper_source_hook "$VIRTUAL_ENV/bin/predeactivate"
     #     virtualenvwrapper_source_hook "$WORKON_HOME/predeactivate"
-    #     
+    #
     #     env_postdeactivate_hook="$VIRTUAL_ENV/bin/postdeactivate"
-    #     
+    #
     #     # Restore the original definition of deactivate
     #     eval "$virtualenvwrapper_saved_deactivate"
 
@@ -244,15 +244,15 @@ function workit () {
     #     virtualenvwrapper_source_hook "$env_postdeactivate_hook"
         workit_source_hook "postdeactivate"
     }'
-    
+
     workit_source_hook "postactivate"
-#    workit_source_hook "$project/postactivate"    
-    
+#    workit_source_hook "$project/postactivate"
+
 	return 0
 }
 
 #
-# Set up tab completion.  (Adapted from Arthur Koziel's version at 
+# Set up tab completion.  (Adapted from Arthur Koziel's version at
 # http://arthurkoziel.com/2008/10/11/virtualenvwrapper-bash-completion/)
-# 
-compctl -g "`show_workit_projects`" workit 
+#
+compctl -g "`show_workit_projects`" workit
